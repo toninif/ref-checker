@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chequeo de citas y referencias</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --border: #e0ded8;
+    --text: #1e1c1a;
+    --muted: #6b6863;
+    --accent: #7a5cff;
+    --accent-text: #ffffff;
+    --ok: #1a7f4b;
+    --ok-bg: #e6f6ee;
+    --warn: #8a6400;
+    --warn-bg: #fdf3d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1b1a;
+      --panel: #262523;
+      --border: #3a3835;
+      --text: #ecebe8;
+      --muted: #a29d94;
+      --accent: #a894ff;
+      --accent-text: #1c1b1a;
+      --ok: #6fd39c;
+      --ok-bg: #123a26;
+      --warn: #e0bb4a;
+      --warn-bg: #453a13;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 20px 80px; }
+  h1 { font-size: 30px; margin: 0 0 10px; line-height: 1.25; }
+  .lead { color: var(--muted); font-size: 17px; margin: 0 0 36px; max-width: 62ch; }
+  .lead b { color: var(--text); }
+  h2 { font-size: 19px; margin: 0 0 14px; }
+  ul.features { padding-left: 20px; margin: 0 0 36px; color: var(--text); }
+  ul.features li { margin-bottom: 8px; }
+  ul.features b { color: var(--text); }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin-bottom: 22px;
+  }
+  .panel.destacado { border-color: var(--accent); }
+  .tag {
+    display: inline-block;
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 3px 11px;
+    margin-bottom: 10px;
+  }
+  .tag.aviso { background: var(--warn-bg); color: var(--warn); }
+  .panel p { color: var(--muted); margin: 8px 0 0; }
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--accent-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 9px;
+    padding: 12px 22px;
+    margin-top: 16px;
+  }
+  .btn.secundario {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+  }
+  .pasos { color: var(--muted); font-size: 14px; margin-top: 14px; }
+  .pasos li { margin-bottom: 4px; }
+  .otras h3 { font-size: 15.5px; margin: 0 0 4px; }
+  .otras .item { padding: 16px 0; border-top: 1px solid var(--border); }
+  .otras .item:first-child { border-top: none; padding-top: 0; }
+  code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: .92em;
+  }
+  footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Chequeo de citas y referencias</h1>
+  <p class="lead">
+    Herramientas gratuitas para auditar la bibliografía de un trabajo académico:
+    detectan <b>referencias que parecen fabricadas por IA</b> (DOIs que no
+    resuelven, títulos que existen pero con año o autor inconsistente) y
+    <b>inconsistencias entre las citas del texto y la lista de referencias</b>
+    en estilo APA.
+  </p>
+
+  <h2>¿Qué detecta?</h2>
+  <ul class="features">
+    <li><b>Citas sin referencia:</b> se cita a alguien en el cuerpo pero no figura en la lista.</li>
+    <li><b>Referencias nunca citadas:</b> están en la lista pero no se usan en el texto.</li>
+    <li><b>Años posiblemente equivocados:</b> el autor existe en la lista pero con otro año.</li>
+    <li><b>Citas secundarias mal puestas:</b> "citado en" / "as cited in" que en APA no deberían tener entrada propia en la lista.</li>
+    <li><b>Referencias fabricadas:</b> DOIs que no resuelven o títulos que no existen en CrossRef/OpenAlex (requiere internet).</li>
+  </ul>
+
+  <div class="panel destacado">
+    <span class="tag">Recomendada · privada</span>
+    <h2 style="margin-top:0">Chequeo de citas — versión offline</h2>
+    <p>
+      Corre <b>100% en tu navegador</b>, sin instalar nada: no sube ningún
+      archivo a ningún servidor. Pensada para tesis o trabajos inéditos que
+      no pueden salir de tu computadora.
+    </p>
+    <a class="btn" href="chequear_citas_offline.zip" download>Descargar (.zip)</a>
+    <ol class="pasos">
+      <li>Descomprimí el .zip (quedan dos archivos: un <code>.html</code> y un <code>.css</code> — tienen que estar juntos en la misma carpeta).</li>
+      <li>Hacé doble click en <code>chequear_citas_offline.html</code>. Se abre en tu navegador.</li>
+      <li>Subí el cuerpo del texto y la lista de referencias (archivo <code>.docx</code>/<code>.txt</code>, o pegando el texto).</li>
+    </ol>
+  </div>
+
+  <div class="otras">
+    <h2>Otras versiones</h2>
+
+    <div class="item">
+      <h3>Notebook de Google Colab</h3>
+      <p style="color:var(--muted); margin:0 0 8px">
+        Sin instalar nada. Además del chequeo de citas, verifica cada
+        referencia contra CrossRef y OpenAlex (necesita internet).
+        <b>El archivo se sube a la infraestructura de Google</b> — no usar
+        con trabajos inéditos.
+      </p>
+      <a class="btn secundario" id="linkColab" href="https://colab.research.google.com/">Abrir notebook</a>
+    </div>
+
+    <div class="item">
+      <h3>Scripts de Python / R</h3>
+      <p style="color:var(--muted); margin:0">
+        Para quienes prefieren correrlo desde la terminal. Mismo motor de
+        chequeo, más control (umbrales, exportar CSV). Instrucciones de uso
+        en el <a id="linkRepo" href="https://github.com/">repositorio</a>.
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    Código y documentación completa en el <a id="linkRepoFooter" href="https://github.com/">repositorio de GitHub</a>.
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+(function () {
+  const host = location.hostname;
+  const m = host.match(/^([^.]+)\.github\.io$/);
+  if (!m) return; // se abrió local o desde otro dominio: dejamos los links por defecto
+  const user = m[1];
+  const segmentos = location.pathname.split("/").filter(Boolean);
+  const repo = segmentos[0] || (user + ".github.io");
+  const repoUrl = `https://github.com/${user}/${repo}`;
+  const colabUrl = `https://colab.research.google.com/github/${user}/${repo}/blob/main/chequeo_referencias_y_citas.ipynb`;
+  document.getElementById("linkColab").href = colabUrl;
+  document.getElementById("linkRepo").href = repoUrl;
+  document.getElementById("linkRepoFooter").href = repoUrl;
+})();
+</script>
+</body>
+</html>
