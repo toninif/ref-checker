@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chequeo de citas y referencias</title>
+<link rel="stylesheet" href="chequear_citas_offline.css">
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Chequeo de citas y referencias</h1>
+  <p class="lead">
+    Corre <b>100% en tu navegador</b>: ningun archivo se sube a ningun servidor ni
+    hace falta una cuenta. Detecta citas del cuerpo sin entrada en la lista
+    de referencias, referencias nunca citadas, posibles anios equivocados y citas
+    secundarias ("citado en") que en APA no deben figurar en la lista de referencias.
+    Subi el cuerpo del texto y la lista de referencias por separado, como archivo
+    (<code>.docx</code> o <code>.txt</code>) o pegando el texto directamente.
+  </p>
+
+  <div class="panel">
+    <h2>1) Subi el cuerpo del texto y la lista de referencias por separado</h2>
+    <div class="secciones">
+      <div class="seccion" id="seccionCuerpo">
+        <h3>Cuerpo del texto</h3>
+        <div class="tabs">
+          <button type="button" class="activo" data-modo="archivo">Subir archivo</button>
+          <button type="button" data-modo="texto">Pegar texto</button>
+        </div>
+        <label class="drop" id="dropCuerpo">
+          <input type="file" id="fileCuerpo" accept=".docx,.txt">
+          Arrastra aca el archivo (.docx o .txt)<br>o hace click para elegirlo
+          <span class="nombre"></span>
+        </label>
+        <textarea class="pegar oculto" id="pegarCuerpo" placeholder="Pega aca el cuerpo del texto..."></textarea>
+      </div>
+
+      <div class="seccion" id="seccionRefs">
+        <h3>Lista de referencias</h3>
+        <div class="tabs">
+          <button type="button" class="activo" data-modo="archivo">Subir archivo</button>
+          <button type="button" data-modo="texto">Pegar texto</button>
+        </div>
+        <label class="drop" id="dropRefs">
+          <input type="file" id="fileRefs" accept=".docx,.txt">
+          Arrastra aca el archivo (.docx o .txt)<br>o hace click para elegirlo
+          <span class="nombre"></span>
+        </label>
+        <textarea class="pegar oculto" id="pegarRefs" placeholder="Pega aca la lista de referencias, una por linea o parrafo..."></textarea>
+      </div>
+    </div>
+
+    <button class="primario" id="btnChequear" disabled>Chequear citas</button>
+    <div class="estado-run" id="estadoRun"></div>
+  </div>
+
+  <div class="panel oculto" id="panelCitas">
+    <h2>Citas en el texto</h2>
+    <div class="resumen" id="resumenCitas"></div>
+    <div class="tabla-header">
+      <input type="search" id="buscarCitas" placeholder="Buscar por apellido, estado o contexto...">
+      <button class="secundario" id="descargarCitas">Descargar CSV</button>
+    </div>
+    <div class="tabla-scroll"><table id="tablaCitas"></table></div>
+  </div>
+
+  <div class="panel oculto" id="panelRefs">
+    <h2>Lista de referencias</h2>
+    <div class="resumen" id="resumenRefs"></div>
+    <div class="tabla-header">
+      <input type="search" id="buscarRefs" placeholder="Buscar por autor, estado o texto...">
+      <button class="secundario" id="descargarRefs">Descargar CSV</button>
+    </div>
+    <div class="tabla-scroll"><table id="tablaRefs"></table></div>
+  </div>
+
+  <details>
+    <summary>Limitaciones conocidas (revisar a mano)</summary>
+    <p class="lead" style="margin-top:8px">
+      Organizaciones citadas por sigla, p. ej. (OMS, 2021) vs. la entrada
+      "Organizacion Mundial de la Salud", figuran como "sin referencia". Citas sin
+      fecha "(Garcia, s.f.)" no se detectan (se exige anio). Mayusculas antes de un
+      anio entre parentesis pueden dar falsos positivos, p. ej. "en Buenos Aires
+      (2020)"; la columna contexto permite descartarlos rapido. Si el archivo
+      <code>.docx</code> no carga (sin internet para traer la libreria de lectura),
+      convertilo antes a <code>.txt</code> o pegá el texto directamente. Si
+      una referencia sale pegada con la siguiente (una linea en blanco perdida en
+      medio de la lista), separalas a mano en el cuadro de texto antes de chequear.
+    </p>
+  </details>
+
+  <footer>Herramienta local de chequeo de citas — sin APIs ni salida de datos del navegador.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+
+// ============================================================================
+// Logica de chequeo (identica a chequear_citas.py / chequear_citas.R)
+// ============================================================================
+
+const NOM = "[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]+";
+const ANIO = "(?:19|20)\\d{2}[a-z]?";
+const PAT_ANIOS = ANIO + "(?:\\s*,\\s*" + ANIO + ")*";
+const PAT_PAGS = "(?:\\s*,\\s*pp?\\.[^)]*)?";
+
+const PAT_NARR =
+  "(" + NOM + "(?:\\s*,\\s*" + NOM + ")*" +
+  "(?:\\s+(?:y|e|and|&)\\s+" + NOM + ")?" +
+  "(?:\\s+et\\s+al\\.?)?" + ")" +
+  "\\s*\\(\\s*(" + PAT_ANIOS + ")" + PAT_PAGS + "\\s*\\)";
+
+const PAT_SOLO_ANIOS = "^\\s*" + PAT_ANIOS + PAT_PAGS + "\\s*$";
+const PAT_CITADO_EN = "citad[oa]\\s+en|como\\s+se\\s+cita\\s+en|as\\s+cited\\s+in|cited\\s+in";
+const PAT_AUTOR_REF = "^\\s*([^,()]+?),\\s*[A-ZÁÉÍÓÚÜÑ]\\.";
+
+const STOPWORDS = new Set(["vease", "veanse", "ver", "see", "cf", "cfr", "also", "como",
+  "segun", "en", "in", "tambien", "and", "the", "la", "el"]);
+
+function normalizar(x) {
+  x = (x || "").normalize("NFKD").replace(/[̀-ͯ]/g, "");
+  x = x.toLowerCase();
+  x = x.replace(/[^a-z0-9 ]/g, " ");
+  return x.replace(/\s+/g, " ").trim();
+}
+
+function squish(x) {
+  return x.replace(/\s+/g, " ").trim();
+}
+
+function anioNum(x) {
+  return parseInt(x.replace(/[a-z]$/, ""), 10);
+}
+
+function contextoEn(texto, ini, fin, margen = 45) {
+  const frag = texto.slice(Math.max(0, ini - margen), Math.min(texto.length, fin + 15));
+  return squish(frag);
+}
+
+function primerApellido(fragmento) {
+  const toks = (fragmento.match(new RegExp(NOM, "g")) || [])
+    .filter((t) => !STOPWORDS.has(normalizar(t)));
+  return toks.length ? toks[0] : null;
+}
+
+function extraerCitas(texto) {
+  texto = texto.replace(/\s+/g, " ");
+  const filas = [];
+
+  function agregar(apellido, aniosTxt, tipo, ctx) {
+    if (apellido === null) return;
+    const anios = aniosTxt.match(new RegExp(ANIO, "g")) || [];
+    for (const a of anios) {
+      filas.push({ apellido, anio_txt: a, anio: anioNum(a), tipo, contexto: ctx });
+    }
+  }
+
+  const reNarr = new RegExp(PAT_NARR, "g");
+  for (const m of texto.matchAll(reNarr)) {
+    const ctx = contextoEn(texto, m.index, m.index + m[0].length);
+    agregar(primerApellido(m[1]), m[2], "narrativa", ctx);
+  }
+
+  const rePar = /\([^()]*\)/g;
+  for (const m of texto.matchAll(rePar)) {
+    const contenido = texto.slice(m.index + 1, m.index + m[0].length - 1);
+    if (!new RegExp(ANIO).test(contenido)) continue;
+    if (new RegExp(PAT_SOLO_ANIOS).test(contenido)) continue;
+    const ctx = contextoEn(texto, m.index, m.index + m[0].length);
+
+    for (let seg of contenido.split(";")) {
+      seg = squish(seg);
+      if (!new RegExp(ANIO).test(seg)) continue;
+
+      const citMatch = new RegExp(PAT_CITADO_EN, "i").exec(seg);
+      if (citMatch) {
+        const izq = seg.slice(0, citMatch.index);
+        const der = seg.slice(citMatch.index + citMatch[0].length);
+        const anioIzq = new RegExp(ANIO).exec(izq);
+        agregar(primerApellido(izq), anioIzq ? anioIzq[0] : "", "secundaria", ctx);
+        seg = der;
+        if (!new RegExp(ANIO).test(seg)) continue;
+      }
+
+      const posAnio = new RegExp(ANIO).exec(seg).index;
+      agregar(primerApellido(seg.slice(0, posAnio)), seg.slice(posAnio), "parentetica", ctx);
+    }
+  }
+
+  return filas;
+}
+
+function resumirCitas(citas) {
+  const grupos = new Map();
+  const orden = [];
+  for (const c of citas) {
+    const clave = normalizar(c.apellido) + "|" + c.anio;
+    if (!grupos.has(clave)) {
+      grupos.set(clave, []);
+      orden.push(clave);
+    }
+    grupos.get(clave).push(c);
+  }
+
+  return orden.map((clave) => {
+    const items = grupos.get(clave);
+    const tipos = [...new Set(items.map((i) => i.tipo))].sort();
+    return {
+      apellido_norm: normalizar(items[0].apellido),
+      anio: items[0].anio,
+      apellido: items[0].apellido,
+      anio_txt: items[0].anio_txt,
+      tipo: tipos.join(", "),
+      n_menciones: items.length,
+      contexto: items[0].contexto,
+      secundaria: items.every((i) => i.tipo === "secundaria"),
+    };
+  });
+}
+
+function clavesReferencias(refs) {
+  return refs.map((refOrig, idx) => {
+    const ref = squish(refOrig);
+    const mAutor = new RegExp(PAT_AUTOR_REF).exec(ref);
+    let autor;
+    if (mAutor) {
+      autor = mAutor[1];
+    } else {
+      const m2 = /^\s*([^.(]+)/.exec(ref);
+      autor = m2 ? m2[1] : "";
+    }
+    const m3 = new RegExp("\\(\\s*(" + ANIO + ")").exec(ref);
+    let anioTxt = m3 ? m3[1] : null;
+    if (!anioTxt) {
+      const m4 = /\b(?:19|20)\d{2}\b/.exec(ref);
+      anioTxt = m4 ? m4[0] : null;
+    }
+    return {
+      n_ref: idx + 1,
+      primer_autor: squish(autor || ""),
+      autor_norm: normalizar(autor || ""),
+      anio: anioTxt ? anioNum(anioTxt) : null,
+      ref_norm: normalizar(ref),
+      referencia: ref,
+    };
+  });
+}
+
+function chequearCitas(texto, refs) {
+  const citas = resumirCitas(extraerCitas(texto));
+  const trefs = clavesReferencias(refs);
+
+  function buscarRef(apellidoNorm, anio) {
+    for (const t of trefs) {
+      if (t.autor_norm === apellidoNorm && t.anio === anio) return { n: t.n_ref, como: "exacto" };
+    }
+    for (const t of trefs) {
+      if (t.anio === anio && t.autor_norm.includes(apellidoNorm)) return { n: t.n_ref, como: "parcial" };
+    }
+    for (const t of trefs) {
+      if (t.anio === anio && t.ref_norm.includes(apellidoNorm + " ")) return { n: t.n_ref, como: "no_principal" };
+    }
+    return { n: null, como: "ninguno" };
+  }
+
+  for (const c of citas) {
+    const { n: nRef, como } = buscarRef(c.apellido_norm, c.anio);
+    c.n_ref = nRef;
+    c.como = como;
+
+    if (c.secundaria) {
+      c.estado = "cita secundaria";
+      c.detalle = "Fuente primaria de un 'citado en'. En APA NO va en la lista de referencias." +
+        (nRef !== null ? " OJO: figura igual en la lista." : "");
+    } else if (como === "exacto") {
+      c.estado = "ok";
+      c.detalle = `Coincide con la referencia ${nRef}.`;
+    } else if (como === "parcial" || como === "no_principal") {
+      const refMatch = trefs.find((t) => t.n_ref === nRef);
+      c.estado = "ok (verificar)";
+      c.detalle = `Coincide con la referencia ${nRef} (${refMatch.primer_autor}, ${refMatch.anio}) pero no como apellido exacto del primer autor. Puede ser apellido compuesto, organizacion o cita por autor no principal (error APA).`;
+    } else {
+      const otros = trefs.filter((t) => t.autor_norm === c.apellido_norm || t.autor_norm.includes(c.apellido_norm));
+      if (otros.length) {
+        const aniosOtros = [...new Set(otros.map((t) => t.anio))].sort((a, b) => (a ?? -1) - (b ?? -1));
+        c.estado = "sin referencia (posible anio equivocado)";
+        c.detalle = `El autor figura en referencias pero con anio ${aniosOtros.join(", ")} (ref ${otros[0].n_ref}). Se cito con ${c.anio}.`;
+      } else {
+        c.estado = "sin referencia";
+        c.detalle = "No hay entrada en la lista de referencias para esta cita.";
+      }
+    }
+  }
+
+  const usados = new Set(citas.filter((c) => c.n_ref !== null && !c.secundaria).map((c) => c.n_ref));
+  for (const t of trefs) {
+    if (usados.has(t.n_ref)) {
+      t.estado = "citada";
+      t.detalle = "";
+    } else {
+      t.estado = "no citada";
+      t.detalle = "No aparece citada en el texto. En APA toda referencia debe estar citada.";
+    }
+  }
+
+  const tablaCitas = [...citas].sort((a, b) => {
+    const pa = ["sin referencia", "sin referencia (posible anio equivocado)"].includes(a.estado) ? 0 : 1;
+    const pb = ["sin referencia", "sin referencia (posible anio equivocado)"].includes(b.estado) ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    if (a.apellido_norm !== b.apellido_norm) return a.apellido_norm < b.apellido_norm ? -1 : 1;
+    return (a.anio ?? -1) - (b.anio ?? -1);
+  }).map((c) => ({
+    apellido: c.apellido, anio: c.anio_txt, tipo: c.tipo, n_menciones: c.n_menciones,
+    estado: c.estado, detalle: c.detalle, contexto: c.contexto,
+  }));
+
+  const tablaRefs = [...trefs].sort((a, b) => {
+    const pa = a.estado === "no citada" ? 0 : 1;
+    const pb = b.estado === "no citada" ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    return a.n_ref - b.n_ref;
+  }).map((t) => ({
+    n_ref: t.n_ref, primer_autor: t.primer_autor, anio: t.anio,
+    estado: t.estado, detalle: t.detalle, referencia: t.referencia,
+  }));
+
+  return { citas: tablaCitas, referencias: tablaRefs };
+}
+
+function _agruparPorBloques(lineas) {
+  const refs = [];
+  let bloque = [];
+  for (const l of lineas) {
+    if (l === "") {
+      if (bloque.length) {
+        refs.push(squish(bloque.join(" ")));
+        bloque = [];
+      }
+    } else {
+      bloque.push(l);
+    }
+  }
+  if (bloque.length) refs.push(squish(bloque.join(" ")));
+  return refs;
+}
+
+function _agruparPorContinuacion(lineas) {
+  const refs = [];
+  for (const l of lineas) {
+    if (l === "") continue;
+    if (refs.length && /^[a-z0-9áéíóúüñ]/.test(l)) {
+      refs[refs.length - 1] = refs[refs.length - 1] + " " + l;
+    } else {
+      refs.push(l);
+    }
+  }
+  return refs;
+}
+
+function agruparReferencias(lineas) {
+  lineas = lineas.map(squish);
+  lineas = lineas.map((l) => l.replace(/^\d+[.)]\s*/, ""));
+
+  // Lineas en blanco solo al principio/final (p. ej. una linea vacia despues
+  // del titulo "Referencias") no separan nada real: se descartan antes de
+  // decidir el modo, para no confundirlas con separadores entre referencias.
+  let inicio = 0;
+  let fin = lineas.length;
+  while (inicio < fin && lineas[inicio] === "") inicio++;
+  while (fin > inicio && lineas[fin - 1] === "") fin--;
+  const recortadas = lineas.slice(inicio, fin);
+
+  const noVacias = recortadas.filter((l) => l !== "").length;
+  const conBlancos = recortadas.some((l) => l === "") && noVacias > 0;
+
+  let refs = conBlancos ? _agruparPorBloques(recortadas) : _agruparPorContinuacion(recortadas);
+
+  // Resguardo: si separar por blancos dio un resultado implausible (una sola
+  // referencia gigante pese a haber varias lineas), una linea en blanco
+  // suelta probablemente rompio la heuristica; se reintenta por continuacion.
+  if (conBlancos && refs.length <= 1 && noVacias > 1) {
+    refs = _agruparPorContinuacion(recortadas);
+  }
+
+  return refs.filter((r) => r);
+}
+
+// ============================================================================
+// Lectura de archivos (.docx via JSZip, .txt nativo)
+// ============================================================================
+
+async function lineasDesdeArchivo(file) {
+  if (/\.docx$/i.test(file.name)) {
+    if (typeof JSZip === "undefined") {
+      throw new Error(
+        "No se pudo cargar la libreria para leer .docx (¿sin internet?). " +
+        "Converti el archivo a .txt e intenta de nuevo."
+      );
+    }
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const docXml = zip.file("word/document.xml");
+    if (!docXml) throw new Error("El archivo no parece un .docx valido.");
+    const xml = await docXml.async("string");
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    return Array.from(doc.getElementsByTagName("w:p")).map((p) =>
+      Array.from(p.getElementsByTagName("w:t")).map((n) => n.textContent).join("")
+    );
+  }
+  const texto = await file.text();
+  return texto.split(/\r\n|\n/);
+}
+
+// ============================================================================
+// UI
+// ============================================================================
+
+const estado = {
+  cuerpo: { modo: "archivo", file: null },
+  refs: { modo: "archivo", file: null },
+};
+
+function capitalizar(s) {
+  return s[0].toUpperCase() + s.slice(1);
+}
+
+function armarSeccion(key) {
+  const seccion = document.getElementById("seccion" + capitalizar(key));
+  const drop = document.getElementById("drop" + capitalizar(key));
+  const input = document.getElementById("file" + capitalizar(key));
+  const textarea = document.getElementById("pegar" + capitalizar(key));
+
+  seccion.querySelectorAll(".tabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      seccion.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("activo"));
+      btn.classList.add("activo");
+      estado[key].modo = btn.dataset.modo;
+      drop.classList.toggle("oculto", estado[key].modo !== "archivo");
+      textarea.classList.toggle("oculto", estado[key].modo !== "texto");
+      actualizarBoton();
+    });
+  });
+
+  input.addEventListener("change", () => {
+    if (input.files[0]) marcarArchivo(key, drop, input.files[0]);
+  });
+  drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    drop.classList.remove("over");
+    if (e.dataTransfer.files[0]) marcarArchivo(key, drop, e.dataTransfer.files[0]);
+  });
+
+  textarea.addEventListener("input", actualizarBoton);
+}
+
+function marcarArchivo(key, drop, file) {
+  estado[key].file = file;
+  drop.classList.add("tiene");
+  drop.querySelector(".nombre").textContent = file.name;
+  actualizarBoton();
+}
+
+function actualizarBoton() {
+  const listo = ["cuerpo", "refs"].every((key) => {
+    if (estado[key].modo === "archivo") return !!estado[key].file;
+    return document.getElementById("pegar" + capitalizar(key)).value.trim() !== "";
+  });
+  document.getElementById("btnChequear").disabled = !listo;
+}
+
+async function lineasDeSeccion(key) {
+  if (estado[key].modo === "archivo") return lineasDesdeArchivo(estado[key].file);
+  return document.getElementById("pegar" + capitalizar(key)).value.split(/\r\n|\n/);
+}
+
+armarSeccion("cuerpo");
+armarSeccion("refs");
+
+function setEstadoRun(msg, esError = false) {
+  const el = document.getElementById("estadoRun");
+  el.textContent = msg;
+  el.classList.toggle("error", esError);
+}
+
+function claseBadge(est) {
+  if (est === "ok" || est === "citada") return "ok";
+  if (est === "ok (verificar)" || est === "sin referencia (posible anio equivocado)") return "warn";
+  if (est === "sin referencia" || est === "no citada") return "bad";
+  return "gray";
+}
+
+function renderResumen(contenedorId, filas) {
+  const conteo = {};
+  for (const f of filas) conteo[f.estado] = (conteo[f.estado] || 0) + 1;
+  const cont = document.getElementById(contenedorId);
+  cont.innerHTML = "";
+  Object.entries(conteo)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([est, n]) => {
+      const chip = document.createElement("span");
+      chip.className = "chip " + claseBadge(est);
+      chip.textContent = `${est}: ${n}`;
+      cont.appendChild(chip);
+    });
+}
+
+function renderTabla(tablaId, filas, columnas) {
+  const tabla = document.getElementById(tablaId);
+  tabla.innerHTML = "";
+  const thead = document.createElement("thead");
+  const trh = document.createElement("tr");
+  columnas.forEach(([, etiqueta]) => {
+    const th = document.createElement("th");
+    th.textContent = etiqueta;
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  tabla.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  filas.forEach((fila) => {
+    const tr = document.createElement("tr");
+    columnas.forEach(([campo]) => {
+      const td = document.createElement("td");
+      const valor = fila[campo] ?? "";
+      if (campo === "estado") {
+        const b = document.createElement("span");
+        b.className = "badge " + claseBadge(valor);
+        b.textContent = valor;
+        td.appendChild(b);
+      } else {
+        td.textContent = valor;
+        if (["contexto", "detalle", "referencia"].includes(campo)) td.classList.add(campo);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tabla.appendChild(tbody);
+}
+
+function aCsv(filas, columnas) {
+  const esc = (v) => {
+    v = String(v ?? "");
+    return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  };
+  const header = columnas.map(([, etiqueta]) => esc(etiqueta)).join(",");
+  const filasCsv = filas.map((f) => columnas.map(([campo]) => esc(f[campo])).join(","));
+  return "﻿" + [header, ...filasCsv].join("\r\n");
+}
+
+function descargar(nombre, contenido) {
+  const blob = new Blob([contenido], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const COLS_CITAS = [
+  ["apellido", "Apellido"], ["anio", "Año"], ["tipo", "Tipo"],
+  ["n_menciones", "Menciones"], ["estado", "Estado"],
+  ["detalle", "Detalle"], ["contexto", "Contexto"],
+];
+const COLS_REFS = [
+  ["n_ref", "#"], ["primer_autor", "Primer autor"], ["anio", "Año"],
+  ["estado", "Estado"], ["detalle", "Detalle"], ["referencia", "Referencia"],
+];
+
+let ultimoResultado = null;
+
+function filtrar(filas, texto) {
+  if (!texto) return filas;
+  const t = normalizar(texto);
+  return filas.filter((f) => normalizar(Object.values(f).join(" ")).includes(t));
+}
+
+document.getElementById("buscarCitas").addEventListener("input", (e) => {
+  if (!ultimoResultado) return;
+  renderTabla("tablaCitas", filtrar(ultimoResultado.citas, e.target.value), COLS_CITAS);
+});
+document.getElementById("buscarRefs").addEventListener("input", (e) => {
+  if (!ultimoResultado) return;
+  renderTabla("tablaRefs", filtrar(ultimoResultado.referencias, e.target.value), COLS_REFS);
+});
+document.getElementById("descargarCitas").addEventListener("click", () => {
+  if (ultimoResultado) descargar("chequeo_citas.csv", aCsv(ultimoResultado.citas, COLS_CITAS));
+});
+document.getElementById("descargarRefs").addEventListener("click", () => {
+  if (ultimoResultado) descargar("chequeo_referencias.csv", aCsv(ultimoResultado.referencias, COLS_REFS));
+});
+
+document.getElementById("btnChequear").addEventListener("click", async () => {
+  const boton = document.getElementById("btnChequear");
+  boton.disabled = true;
+  setEstadoRun("Procesando...");
+  try {
+    const lineasCuerpo = await lineasDeSeccion("cuerpo");
+    const lineasRefs = await lineasDeSeccion("refs");
+    const texto = lineasCuerpo.join("\n");
+    const refs = agruparReferencias(lineasRefs);
+    setEstadoRun(`Referencias detectadas: ${refs.length}`);
+
+    const resultado = chequearCitas(texto, refs);
+    ultimoResultado = resultado;
+
+    document.getElementById("panelCitas").classList.remove("oculto");
+    document.getElementById("panelRefs").classList.remove("oculto");
+    document.getElementById("buscarCitas").value = "";
+    document.getElementById("buscarRefs").value = "";
+    renderResumen("resumenCitas", resultado.citas);
+    renderResumen("resumenRefs", resultado.referencias);
+    renderTabla("tablaCitas", resultado.citas, COLS_CITAS);
+    renderTabla("tablaRefs", resultado.referencias, COLS_REFS);
+  } catch (err) {
+    setEstadoRun("Error: " + err.message, true);
+    console.error(err);
+  } finally {
+    actualizarBoton();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+  :root {
+    --bg: #f4efe4;
+    --panel: #fffdf7;
+    --border: #cfc5b2;
+    --text: #211f1b;
+    --muted: #665f55;
+    --accent: #8f1d2c;
+    --green: #164b3b;
+    --green-dark: #0d3027;
+    --ok: #245f43;
+    --ok-bg: #e3efe6;
+    --warn: #7a5815;
+    --warn-bg: #f4e8c9;
+    --bad: #8f1d2c;
+    --bad-bg: #f3dfe0;
+    --gray: #55514a;
+    --gray-bg: #e9e4da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      linear-gradient(rgba(20, 18, 15, .26), rgba(20, 18, 15, .26)),
+      linear-gradient(to right, #682b2d 0 50%, transparent 50%),
+      conic-gradient(from 30deg at 25% 75%,
+        #273d32 0 60deg,
+        #ba8a45 60deg 120deg,
+        #395743 120deg 180deg,
+        #d2b36c 180deg 240deg,
+        #78443a 240deg 300deg,
+        #273d32 300deg 360deg);
+    background-position: 0 0, 0 0, 0 0;
+    background-size: 100% 100%, 100% 100%, 72px 72px;
+    background-attachment: fixed;
+    color: var(--text);
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap {
+    max-width: 1028px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 40px 44px 80px;
+    background:
+      linear-gradient(rgba(248, 244, 235, .97), rgba(248, 244, 235, .97)),
+      repeating-linear-gradient(0deg, transparent 0 23px, rgba(65, 50, 35, .08) 24px),
+      var(--bg);
+    box-shadow: 0 0 42px rgba(12, 9, 7, .48);
+  }
+  .wrap::before {
+    content: "引用チェック";
+    display: block;
+    color: var(--accent);
+    font: 700 11px/1 Georgia, serif;
+    letter-spacing: .3em;
+    margin-bottom: 12px;
+  }
+  h1 { font: 700 28px/1.2 Georgia, "Times New Roman", serif; margin: 0 0 8px; }
+  .lead { color: var(--muted); margin: 0 0 24px; max-width: 70ch; }
+  .lead b { color: var(--text); }
+  .panel {
+    background: var(--panel);
+    border: 1px solid #171a18;
+    border-radius: 0;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .panel h2 { font-size: 15px; margin: 0 0 14px; }
+  .secciones { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 720px) {
+    .wrap { padding: 32px 20px 64px; }
+    .secciones { grid-template-columns: 1fr; }
+  }
+  .seccion h3 { font-size: 13.5px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .tabs button {
+    flex: 1;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+    border-radius: 0;
+  }
+  .tabs button.activo { background: var(--green); color: white; border-color: var(--green); font-weight: 600; }
+  .drop {
+    border: 1.5px dashed var(--border);
+    border-radius: 0;
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    font-size: 13.5px;
+    color: var(--muted);
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .drop.tiene { border-style: solid; border-color: var(--ok); color: var(--text); }
+  .drop input { display: none; }
+  .drop .nombre { display: block; margin-top: 4px; font-weight: 600; }
+  textarea.pegar {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 10px 12px;
+    font: 13px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: var(--bg);
+    color: var(--text);
+  }
+  button.primario {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 0;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  button.primario:disabled { opacity: .45; cursor: not-allowed; }
+  button.primario:not(:disabled):hover { background: #681420; }
+  button.secundario {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 0;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .estado-run { margin-top: 12px; font-size: 13px; color: var(--muted); white-space: pre-wrap; min-height: 1.2em; }
+  .estado-run.error { color: var(--bad); }
+  .resumen { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 16px; }
+  .chip { border-radius: 2px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; }
+  .chip.ok { background: var(--ok-bg); color: var(--ok); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.bad { background: var(--bad-bg); color: var(--bad); }
+  .chip.gray { background: var(--gray-bg); color: var(--gray); }
+  .tabla-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tabla-header input[type=search] {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    min-width: 220px;
+  }
+  .tabla-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #eee7d9; position: sticky; top: 0; font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td.contexto, td.detalle, td.referencia { color: var(--muted); max-width: 420px; }
+  .badge { display: inline-block; border-radius: 2px; padding: 2px 8px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.bad { background: var(--bad-bg); color: var(--bad); }
+  .badge.gray { background: var(--gray-bg); color: var(--gray); }
+  details summary { cursor: pointer; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .oculto { display: none !important; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 30px; }

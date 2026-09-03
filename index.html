@@ -122,6 +122,13 @@
   .btn:hover {
     background: #681420;
   }
+  .btn.secundario {
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--accent);
+    margin-left: 8px;
+  }
+  .btn.secundario:hover { background: #f3e2df; }
   .btn:focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 3px;
@@ -167,17 +174,18 @@
   </ul>
 
   <div class="panel destacado">
-    <span class="tag">Herramienta offline</span>
-    <h2 style="margin-top:0">Usá el chequeador en tu computadora</h2>
+    <span class="tag">Procesamiento local y privado</span>
+    <h2 style="margin-top:0">Chequeá tus citas</h2>
     <p>
-      Descargá la herramienta y abrila directamente en el navegador. No
-      requiere instalación y es adecuada para tesis y trabajos inéditos.
+      Podés usar la herramienta directamente o descargarla. En ambos casos,
+      el texto se procesa dentro de tu navegador y no se envía a un servidor.
     </p>
-    <a class="btn" href="chequear_citas_offline.zip" download>Descargar (.zip)</a>
+    <a class="btn" href="chequear_citas_offline.html">Usar online</a>
+    <a class="btn secundario" href="chequear_citas_offline.zip" download>Descargar (.zip)</a>
     <ol class="pasos">
-      <li>Descomprimí el .zip (quedan dos archivos: un <code>.html</code> y un <code>.css</code> — tienen que estar juntos en la misma carpeta).</li>
-      <li>Hacé doble click en <code>chequear_citas_offline.html</code>. Se abre en tu navegador.</li>
-      <li>Subí el cuerpo del texto y la lista de referencias (archivo <code>.docx</code>/<code>.txt</code>, o pegando el texto).</li>
+      <li>Abrí el chequeador online o descargá el .zip para guardarlo en tu computadora.</li>
+      <li>Cargá el cuerpo del texto y la lista de referencias por separado.</li>
+      <li>Revisá los resultados y, si querés, descargalos como CSV.</li>
     </ol>
   </div>
 
