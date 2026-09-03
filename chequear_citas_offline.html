@@ -11,16 +11,16 @@
 
   <h1>Chequeo de citas y referencias</h1>
   <p class="lead">
-    Corre <b>100% en tu navegador</b>: ningun archivo se sube a ningun servidor ni
+    Corre <b>100% en tu navegador</b>: ningún archivo se sube a ningún servidor ni
     hace falta una cuenta. Detecta citas del cuerpo sin entrada en la lista
-    de referencias, referencias nunca citadas, posibles anios equivocados y citas
+    de referencias, referencias nunca citadas, posibles años equivocados y citas
     secundarias ("citado en") que en APA no deben figurar en la lista de referencias.
-    Subi el cuerpo del texto y la lista de referencias por separado, como archivo
+    Subí el cuerpo del texto y la lista de referencias por separado, como archivo
     (<code>.docx</code> o <code>.txt</code>) o pegando el texto directamente.
   </p>
 
   <div class="panel">
-    <h2>1) Subi el cuerpo del texto y la lista de referencias por separado</h2>
+    <h2>1) Subí el cuerpo del texto y la lista de referencias por separado</h2>
     <div class="secciones">
       <div class="seccion" id="seccionCuerpo">
         <h3>Cuerpo del texto</h3>
@@ -30,10 +30,10 @@
         </div>
         <label class="drop" id="dropCuerpo">
           <input type="file" id="fileCuerpo" accept=".docx,.txt">
-          Arrastra aca el archivo (.docx o .txt)<br>o hace click para elegirlo
+          Arrastrá acá el archivo (.docx o .txt)<br>o hacé clic para elegirlo
           <span class="nombre"></span>
         </label>
-        <textarea class="pegar oculto" id="pegarCuerpo" placeholder="Pega aca el cuerpo del texto..."></textarea>
+        <textarea class="pegar oculto" id="pegarCuerpo" placeholder="Pegá acá el cuerpo del texto..."></textarea>
       </div>
 
       <div class="seccion" id="seccionRefs">
@@ -44,10 +44,10 @@
         </div>
         <label class="drop" id="dropRefs">
           <input type="file" id="fileRefs" accept=".docx,.txt">
-          Arrastra aca el archivo (.docx o .txt)<br>o hace click para elegirlo
+          Arrastrá acá el archivo (.docx o .txt)<br>o hacé clic para elegirlo
           <span class="nombre"></span>
         </label>
-        <textarea class="pegar oculto" id="pegarRefs" placeholder="Pega aca la lista de referencias, una por linea o parrafo..."></textarea>
+        <textarea class="pegar oculto" id="pegarRefs" placeholder="Pegá acá la lista de referencias, una por línea o párrafo..."></textarea>
       </div>
     </div>
 
@@ -79,13 +79,13 @@
     <summary>Limitaciones conocidas (revisar a mano)</summary>
     <p class="lead" style="margin-top:8px">
       Organizaciones citadas por sigla, p. ej. (OMS, 2021) vs. la entrada
-      "Organizacion Mundial de la Salud", figuran como "sin referencia". Citas sin
-      fecha "(Garcia, s.f.)" no se detectan (se exige anio). Mayusculas antes de un
-      anio entre parentesis pueden dar falsos positivos, p. ej. "en Buenos Aires
-      (2020)"; la columna contexto permite descartarlos rapido. Si el archivo
+      "Organización Mundial de la Salud", figuran como "sin referencia". Citas sin
+      fecha "(García, s.f.)" no se detectan (se exige año). Mayúsculas antes de un
+      año entre paréntesis pueden dar falsos positivos, p. ej. "en Buenos Aires
+      (2020)"; la columna contexto permite descartarlos rápido. Si el archivo
       <code>.docx</code> no carga (sin internet para traer la libreria de lectura),
       convertilo antes a <code>.txt</code> o pegá el texto directamente. Si
-      una referencia sale pegada con la siguiente (una linea en blanco perdida en
+      una referencia sale pegada con la siguiente (una línea en blanco perdida en
       medio de la lista), separalas a mano en el cuadro de texto antes de chequear.
     </p>
   </details>
@@ -280,13 +280,13 @@ function chequearCitas(texto, refs) {
     } else if (como === "parcial" || como === "no_principal") {
       const refMatch = trefs.find((t) => t.n_ref === nRef);
       c.estado = "ok (verificar)";
-      c.detalle = `Coincide con la referencia ${nRef} (${refMatch.primer_autor}, ${refMatch.anio}) pero no como apellido exacto del primer autor. Puede ser apellido compuesto, organizacion o cita por autor no principal (error APA).`;
+      c.detalle = `Coincide con la referencia ${nRef} (${refMatch.primer_autor}, ${refMatch.anio}) pero no como apellido exacto del primer autor. Puede ser apellido compuesto, organización o cita por autor no principal (error APA).`;
     } else {
       const otros = trefs.filter((t) => t.autor_norm === c.apellido_norm || t.autor_norm.includes(c.apellido_norm));
       if (otros.length) {
         const aniosOtros = [...new Set(otros.map((t) => t.anio))].sort((a, b) => (a ?? -1) - (b ?? -1));
-        c.estado = "sin referencia (posible anio equivocado)";
-        c.detalle = `El autor figura en referencias pero con anio ${aniosOtros.join(", ")} (ref ${otros[0].n_ref}). Se cito con ${c.anio}.`;
+        c.estado = "sin referencia (posible año equivocado)";
+        c.detalle = `El autor figura en referencias pero con año ${aniosOtros.join(", ")} (ref ${otros[0].n_ref}). Se citó con ${c.anio}.`;
       } else {
         c.estado = "sin referencia";
         c.detalle = "No hay entrada en la lista de referencias para esta cita.";
@@ -306,8 +306,8 @@ function chequearCitas(texto, refs) {
   }
 
   const tablaCitas = [...citas].sort((a, b) => {
-    const pa = ["sin referencia", "sin referencia (posible anio equivocado)"].includes(a.estado) ? 0 : 1;
-    const pb = ["sin referencia", "sin referencia (posible anio equivocado)"].includes(b.estado) ? 0 : 1;
+    const pa = ["sin referencia", "sin referencia (posible año equivocado)"].includes(a.estado) ? 0 : 1;
+    const pb = ["sin referencia", "sin referencia (posible año equivocado)"].includes(b.estado) ? 0 : 1;
     if (pa !== pb) return pa - pb;
     if (a.apellido_norm !== b.apellido_norm) return a.apellido_norm < b.apellido_norm ? -1 : 1;
     return (a.anio ?? -1) - (b.anio ?? -1);
@@ -488,7 +488,7 @@ function setEstadoRun(msg, esError = false) {
 
 function claseBadge(est) {
   if (est === "ok" || est === "citada") return "ok";
-  if (est === "ok (verificar)" || est === "sin referencia (posible anio equivocado)") return "warn";
+  if (est === "ok (verificar)" || est === "sin referencia (posible año equivocado)") return "warn";
   if (est === "sin referencia" || est === "no citada") return "bad";
   return "gray";
 }
