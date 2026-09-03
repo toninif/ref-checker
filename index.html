@@ -3,103 +3,135 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chequeo de citas y referencias</title>
+<title>Chequeo de citas</title>
 <style>
   :root {
-    --bg: #f7f7f5;
-    --panel: #ffffff;
-    --border: #e0ded8;
-    --text: #1e1c1a;
-    --muted: #6b6863;
-    --accent: #7a5cff;
+    --bg: #f4efe4;
+    --panel: #fffdf7;
+    --border: #cfc5b2;
+    --text: #211f1b;
+    --muted: #665f55;
+    --accent: #8f1d2c;
     --accent-text: #ffffff;
-    --ok: #1a7f4b;
-    --ok-bg: #e6f6ee;
-    --warn: #8a6400;
-    --warn-bg: #fdf3d6;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1b1a;
-      --panel: #262523;
-      --border: #3a3835;
-      --text: #ecebe8;
-      --muted: #a29d94;
-      --accent: #a894ff;
-      --accent-text: #1c1b1a;
-      --ok: #6fd39c;
-      --ok-bg: #123a26;
-      --warn: #e0bb4a;
-      --warn-bg: #453a13;
-    }
+    --green: #164b3b;
+    --green-dark: #0d3027;
+    --ink: #171a18;
+    --ok: #164b3b;
+    --ok-bg: transparent;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--bg);
+    background:
+      linear-gradient(rgba(20, 18, 15, .26), rgba(20, 18, 15, .26)),
+      linear-gradient(to right, #682b2d 0 50%, transparent 50%),
+      conic-gradient(from 30deg at 25% 75%,
+        #273d32 0 60deg,
+        #ba8a45 60deg 120deg,
+        #395743 120deg 180deg,
+        #d2b36c 180deg 240deg,
+        #78443a 240deg 300deg,
+        #273d32 300deg 360deg);
+    background-position: 0 0, 0 0, 0 0;
+    background-size: 100% 100%, 100% 100%, 72px 72px;
+    background-attachment: fixed;
     color: var(--text);
     font: 16px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 20px 80px; }
-  h1 { font-size: 30px; margin: 0 0 10px; line-height: 1.25; }
-  .lead { color: var(--muted); font-size: 17px; margin: 0 0 36px; max-width: 62ch; }
+  .wrap {
+    max-width: 768px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 68px 48px 80px;
+    background:
+      linear-gradient(rgba(248, 244, 235, .96), rgba(248, 244, 235, .96)),
+      repeating-linear-gradient(0deg, transparent 0 23px, rgba(65, 50, 35, .08) 24px),
+      var(--bg);
+    box-shadow: 0 0 42px rgba(12, 9, 7, .48);
+  }
+  .wrap::before {
+    content: "引用チェック";
+    display: block;
+    color: var(--accent);
+    font: 700 12px/1 Georgia, serif;
+    letter-spacing: .3em;
+    margin-bottom: 18px;
+  }
+  h1 {
+    max-width: 16ch;
+    font: 700 40px/1.12 Georgia, "Times New Roman", serif;
+    margin: 0 0 16px;
+    letter-spacing: -.015em;
+    text-shadow: 1px 1px 0 #fff;
+  }
+  .lead { color: var(--muted); font-size: 17px; margin: 0 0 44px; max-width: 59ch; }
   .lead b { color: var(--text); }
   h2 { font-size: 19px; margin: 0 0 14px; }
-  ul.features { padding-left: 20px; margin: 0 0 36px; color: var(--text); }
+  ul.features { padding-left: 0; margin: 0 0 40px; color: var(--text); list-style: none; }
   ul.features li { margin-bottom: 8px; }
+  ul.features li::before { content: "◆"; color: var(--accent); font-size: 10px; margin-right: 10px; }
   ul.features b { color: var(--text); }
   .panel {
     background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 26px 28px;
-    margin-bottom: 22px;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    padding: 30px;
+    margin-bottom: 24px;
+    position: relative;
   }
-  .panel.destacado { border-color: var(--accent); }
+  .panel.destacado { border-top: 0; }
+  .panel.destacado::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 9px;
+    background: conic-gradient(from 30deg at 25% 75%,
+      var(--green-dark) 0 60deg,
+      #b6813d 60deg 120deg,
+      var(--green) 120deg 180deg,
+      #d0ad62 180deg 240deg,
+      #743c35 240deg 300deg,
+      var(--green-dark) 300deg 360deg);
+    background-size: 36px 36px;
+  }
   .tag {
-    display: inline-block;
+    display: block;
     background: var(--ok-bg);
-    color: var(--ok);
-    font-size: 12px;
+    color: var(--accent);
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: .02em;
+    letter-spacing: .09em;
     text-transform: uppercase;
-    border-radius: 999px;
-    padding: 3px 11px;
-    margin-bottom: 10px;
+    padding: 0;
+    margin-bottom: 8px;
   }
-  .tag.aviso { background: var(--warn-bg); color: var(--warn); }
   .panel p { color: var(--muted); margin: 8px 0 0; }
   .btn {
     display: inline-block;
     background: var(--accent);
     color: var(--accent-text);
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 650;
     font-size: 15px;
-    border-radius: 9px;
-    padding: 12px 22px;
+    border: 1px solid #65121e;
+    border-radius: 0;
+    padding: 11px 18px;
     margin-top: 16px;
-    transition: transform 160ms ease, box-shadow 160ms ease;
+    transition: background-color 140ms ease;
   }
   .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(122, 92, 255, .25);
+    background: #681420;
   }
   .btn:focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 3px;
   }
-  .btn.secundario {
-    background: transparent;
-    color: var(--accent);
-    border: 1.5px solid var(--accent);
-  }
   .pasos { color: var(--muted); font-size: 14px; margin-top: 14px; }
   .pasos li { margin-bottom: 4px; }
-  .otras h3 { font-size: 15.5px; margin: 0 0 4px; }
-  .otras .item { padding: 16px 0; border-top: 1px solid var(--border); }
-  .otras .item:first-child { border-top: none; padding-top: 0; }
+  .mas-info { margin-top: 42px; padding-top: 24px; border-top: 3px double var(--border); }
+  .mas-info p { color: var(--muted); margin: 0 0 12px; }
+  .enlaces { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .enlaces a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
   code {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -107,20 +139,23 @@
     padding: 1px 6px;
     font-size: .92em;
   }
-  footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 44px; }
   footer a { color: var(--muted); }
+  @media (max-width: 600px) {
+    .wrap { padding: 48px 22px 64px; }
+    h1 { font-size: 34px; }
+    .panel { padding: 26px 22px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <h1>Chequeo de citas y referencias</h1>
+  <h1>Chequeá las citas de tu trabajo</h1>
   <p class="lead">
-    Herramientas gratuitas para auditar la bibliografía de un trabajo académico:
-    detectan <b>referencias que parecen fabricadas por IA</b> (DOIs que no
-    resuelven, títulos que existen pero con año o autor inconsistente) y
-    <b>inconsistencias entre las citas del texto y la lista de referencias</b>
-    en estilo APA.
+    Compará las citas del texto con la lista de referencias y encontrá
+    inconsistencias antes de entregar. Todo ocurre <b>en tu navegador</b>:
+    tus archivos no se suben a ningún servidor.
   </p>
 
   <h2>¿Qué detecta?</h2>
@@ -128,17 +163,15 @@
     <li><b>Citas sin referencia:</b> se cita a alguien en el cuerpo pero no figura en la lista.</li>
     <li><b>Referencias nunca citadas:</b> están en la lista pero no se usan en el texto.</li>
     <li><b>Años posiblemente equivocados:</b> el autor existe en la lista pero con otro año.</li>
-    <li><b>Citas secundarias mal puestas:</b> "citado en" / "as cited in" que en APA no deberían tener entrada propia en la lista.</li>
-    <li><b>Referencias fabricadas:</b> DOIs que no resuelven o títulos que no existen en CrossRef/OpenAlex (requiere internet).</li>
+    <li><b>Citas secundarias:</b> identifica expresiones como "citado en" o "as cited in" para evitar entradas incorrectas en la bibliografía.</li>
   </ul>
 
   <div class="panel destacado">
-    <span class="tag">Recomendada · privada</span>
-    <h2 style="margin-top:0">Chequeo de citas — versión offline</h2>
+    <span class="tag">Herramienta offline</span>
+    <h2 style="margin-top:0">Usá el chequeador en tu computadora</h2>
     <p>
-      Corre <b>100% en tu navegador</b>, sin instalar nada: no sube ningún
-      archivo a ningún servidor. Pensada para tesis o trabajos inéditos que
-      no pueden salir de tu computadora.
+      Descargá la herramienta y abrila directamente en el navegador. No
+      requiere instalación y es adecuada para tesis y trabajos inéditos.
     </p>
     <a class="btn" href="chequear_citas_offline.zip" download>Descargar (.zip)</a>
     <ol class="pasos">
@@ -148,27 +181,15 @@
     </ol>
   </div>
 
-  <div class="otras">
-    <h2>Otras versiones</h2>
-
-    <div class="item">
-      <h3>Notebook de Google Colab</h3>
-      <p style="color:var(--muted); margin:0 0 8px">
-        Sin instalar nada. Además del chequeo de citas, verifica cada
-        referencia contra CrossRef y OpenAlex (necesita internet).
-        <b>El archivo se sube a la infraestructura de Google</b> — no usar
-        con trabajos inéditos.
-      </p>
-      <a class="btn secundario" id="linkColab" href="https://colab.research.google.com/">Abrir notebook</a>
-    </div>
-
-    <div class="item">
-      <h3>Scripts de Python / R</h3>
-      <p style="color:var(--muted); margin:0">
-        Para quienes prefieren correrlo desde la terminal. Mismo motor de
-        chequeo, más control (umbrales, exportar CSV). Instrucciones de uso
-        en el <a id="linkRepo" href="https://github.com/">repositorio</a>.
-      </p>
+  <div class="mas-info">
+    <h2>¿Buscás más herramientas?</h2>
+    <p>
+      La notebook y el repositorio incluyen otras formas de ejecutar el
+      chequeo y documentación técnica del proyecto.
+    </p>
+    <div class="enlaces">
+      <a id="linkColab" href="https://colab.research.google.com/">Notebook de Colab</a>
+      <a id="linkRepo" href="https://github.com/">Repositorio y documentación</a>
     </div>
   </div>
 
